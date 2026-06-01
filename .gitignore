@@ -11,6 +11,10 @@ backend/.env
 dist/
 frontend/dist/
 
+# Development cache
+.vite/
+frontend/.vite/
+
 # System files
 .DS_Store
 Thumbs.db
