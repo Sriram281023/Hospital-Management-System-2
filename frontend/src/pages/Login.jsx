@@ -49,7 +49,7 @@ export default function Login() {
     const nextIsSignUp = !isSignUp;
     setIsSignUp(nextIsSignUp);
     if (nextIsSignUp) {
-      if (role === "Admin") setRole("Patient");
+      setRole("Patient");
     } else {
       setRole("Admin");
     }
@@ -88,25 +88,27 @@ export default function Login() {
           <p style={{ margin:"6px 0 0", color:T.muted, fontSize:14 }}>Hospital Management System</p>
         </div>
 
-        {/* Role Tabs */}
-        <div style={{
-          display:"flex", gap:6, marginBottom:28,
-          background:"#f1f5f9", padding:4, borderRadius:12,
-        }}>
-          {(isSignUp ? ["Patient", "Doctor"] : ["Admin", "Doctor", "Patient"]).map(r => (
-            <button key={r}
-              onClick={() => { setRole(r); setErr(""); setUsername(""); setPassword(""); }}
-              style={{
-                flex:1, padding:"9px 0", borderRadius:9, border:"none",
-                cursor:"pointer", fontWeight:600, fontSize:13,
-                background: role===r ? T.teal : "transparent",
-                color: role===r ? "white" : T.muted,
-                transition:"all 0.2s",
-              }}>
-              {r}
-            </button>
-          ))}
-        </div>
+        {/* Role Tabs (Sign In only) */}
+        {!isSignUp && (
+          <div style={{
+            display:"flex", gap:6, marginBottom:28,
+            background:"#f1f5f9", padding:4, borderRadius:12,
+          }}>
+            {["Admin","Doctor","Patient"].map(r => (
+              <button key={r}
+                onClick={() => { setRole(r); setErr(""); setUsername(""); setPassword(""); }}
+                style={{
+                  flex:1, padding:"9px 0", borderRadius:9, border:"none",
+                  cursor:"pointer", fontWeight:600, fontSize:13,
+                  background: role===r ? T.teal : "transparent",
+                  color: role===r ? "white" : T.muted,
+                  transition:"all 0.2s",
+                }}>
+                {r}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Fields */}
         {isSignUp && (
