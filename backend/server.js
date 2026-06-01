@@ -22,6 +22,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
+// ─── Debug Log Middleware ───────────────────────────────────────────────────
+app.use((req, res, next) => {
+  const originalJson = res.json;
+  res.json = function (data) {
+    console.log(`[API LOG] ${req.method} ${req.originalUrl} | Status: ${res.statusCode} | User: ${req.user?.username || "Guest"} | Res:`, JSON.stringify(data).slice(0, 150));
+    return originalJson.apply(this, arguments);
+  };
+  next();
+});
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth",         require("./routes/auth"));
 app.use("/api/patients",     require("./routes/patients"));
