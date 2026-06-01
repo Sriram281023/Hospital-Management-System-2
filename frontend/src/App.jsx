@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "./context/AppContext";
 import Login       from "./pages/Login";
 import Sidebar     from "./components/common/Sidebar";
@@ -11,7 +11,13 @@ import { Toast, T } from "./components/common/UI";
 
 export default function App() {
   const { auth, toast } = useApp();
-  const [page, setPage] = useState(auth?.role === "Patient" ? "appointments" : "dashboard");
+  const [page, setPage] = useState("dashboard");
+
+  useEffect(() => {
+    if (auth) {
+      setPage(auth.role === "Patient" ? "appointments" : "dashboard");
+    }
+  }, [auth]);
 
   // Not logged in → show login
   if (!auth) return <Login />;
