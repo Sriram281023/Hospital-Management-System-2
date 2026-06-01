@@ -10,7 +10,14 @@ connectDB();
 const app = express();
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000", credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    // Echo back the requesting origin to satisfy CORS with credentials
+    if (!origin) return callback(null, true);
+    callback(null, origin);
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
