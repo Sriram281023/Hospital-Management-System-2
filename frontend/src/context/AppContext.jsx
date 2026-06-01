@@ -33,6 +33,14 @@ export function AppProvider({ children }) {
     return data;
   };
 
+  const register = async (name, username, password, role) => {
+    const { data } = await authAPI.register({ name, username, password, role });
+    localStorage.setItem("hms_token", data.token);
+    localStorage.setItem("hms_user",  JSON.stringify(data.user));
+    setAuth(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem("hms_token");
     localStorage.removeItem("hms_user");
@@ -141,7 +149,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      auth, login, logout,
+      auth, login, logout, register,
       patients, addPatient, updatePatient, deletePatient,
       doctors,  addDoctor,  updateDoctor,  deleteDoctor,
       appointments, addAppointment, updateAppointment, deleteAppointment,

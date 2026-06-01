@@ -3,31 +3,60 @@ import { useApp } from "../context/AppContext";
 import { T, Field, Input, Btn } from "../components/common/UI";
 
 export default function Login() {
-  const { login } = useApp();
+  const { login, register } = useApp();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [role,     setRole]     = useState("Admin");
+  const [name,     setName]     = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [err,      setErr]      = useState("");
   const [loading,  setLoading]  = useState(false);
 
-  async function handleLogin() {
-    if (!username || !password) {
-      setErr("Please enter both username and password.");
-      return;
+  async function handleSubmit() {
+    if (isSignUp) {
+      if (!name || !username || !password) {
+        setErr("Please enter full name, username, and password.");
+        return;
+      }
+      setLoading(true);
+      setErr("");
+      try {
+        await register(name, username, password, role);
+      } catch (e) {
+        setErr(e.response?.data?.message || "Registration failed. Try a different username.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (!username || !password) {
+        setErr("Please enter both username and password.");
+        return;
+      }
+      setLoading(true);
+      setErr("");
+      try {
+        await login(username, password);
+      } catch (e) {
+        setErr(e.response?.data?.message || "Login failed. Check credentials.");
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(true);
+  }
+
+  function toggleMode() {
     setErr("");
-    try {
-      await login(username, password);
-    } catch (e) {
-      setErr(e.response?.data?.message || "Login failed. Check credentials.");
-    } finally {
-      setLoading(false);
+    const nextIsSignUp = !isSignUp;
+    setIsSignUp(nextIsSignUp);
+    if (nextIsSignUp) {
+      if (role === "Admin") setRole("Patient");
+    } else {
+      setRole("Admin");
     }
   }
 
   function handleKey(e) {
-    if (e.key === "Enter") handleLogin();
+    if (e.key === "Enter") handleSubmit();
   }
 
   return (
@@ -64,7 +93,7 @@ export default function Login() {
           display:"flex", gap:6, marginBottom:28,
           background:"#f1f5f9", padding:4, borderRadius:12,
         }}>
-          {["Admin","Doctor","Patient"].map(r => (
+          {(isSignUp ? ["Patient", "Doctor"] : ["Admin", "Doctor", "Patient"]).map(r => (
             <button key={r}
               onClick={() => { setRole(r); setErr(""); setUsername(""); setPassword(""); }}
               style={{
@@ -80,6 +109,16 @@ export default function Login() {
         </div>
 
         {/* Fields */}
+        {isSignUp && (
+          <Field label="Full Name">
+            <Input
+              value={name}
+              onChange={v => { setName(v); setErr(""); }}
+              placeholder="Enter your full name"
+            />
+          </Field>
+        )}
+
         <Field label="Username">
           <Input
             value={username}
@@ -111,12 +150,22 @@ export default function Login() {
 
         {/* Submit */}
         <Btn
-          onClick={handleLogin}
+          onClick={handleSubmit}
           disabled={loading}
           style={{ width:"100%", padding:"12px", marginBottom:16, fontSize:15 }}
         >
-          {loading ? "Signing in…" : "Sign In →"}
+          {loading ? (isSignUp ? "Creating account…" : "Signing in…") : (isSignUp ? "Sign Up →" : "Sign In →")}
         </Btn>
+
+        {/* Mode Toggle Button */}
+        <div style={{ textAlign:"center", marginTop:16 }}>
+          <button onClick={toggleMode} style={{
+            background:"none", border:"none", color:T.teal, cursor:"pointer",
+            fontWeight:600, fontSize:13, textDecoration:"underline"
+          }}>
+            {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
+          </button>
+        </div>
 
         {/* Footer note */}
         <p style={{ textAlign:"center", color:T.muted, fontSize:11, marginTop:20, marginBottom:0 }}>
