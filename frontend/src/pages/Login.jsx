@@ -48,6 +48,12 @@ export default function Login() {
     setErr("");
     const nextIsSignUp = !isSignUp;
     setIsSignUp(nextIsSignUp);
+
+    // Clear form fields so the other mode starts fresh
+    setName("");
+    setUsername("");
+    setPassword("");
+
     if (nextIsSignUp) {
       setRole("Patient");
     } else {
