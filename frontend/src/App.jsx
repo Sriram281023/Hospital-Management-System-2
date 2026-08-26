@@ -10,7 +10,7 @@ import Billing     from "./components/modules/Billing";
 import { Toast, T } from "./components/common/UI";
 
 export default function App() {
-  const { auth, toast } = useApp();
+  const { auth, authChecked, toast } = useApp();
   const [page, setPage] = useState("dashboard");
 
   useEffect(() => {
@@ -18,6 +18,15 @@ export default function App() {
       setPage(auth.role === "Patient" ? "appointments" : "dashboard");
     }
   }, [auth]);
+
+  // Wait until auth verification completes before rendering
+  if (!authChecked) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        Loading…
+      </div>
+    );
+  }
 
   // Not logged in → show login
   if (!auth) return <Login />;
