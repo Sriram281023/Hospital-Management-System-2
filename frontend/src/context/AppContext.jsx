@@ -4,13 +4,11 @@ import { authAPI, patientsAPI, doctorsAPI, appointmentsAPI, billsAPI } from "../
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  const [auth,    setAuth]    = useState(() => {
-    const u = localStorage.getItem("hms_user");
-    return u ? JSON.parse(u) : null;
-  });
+  // ── Auth ────────────────────────────────────────────────────────────
+  const [auth,    setAuth]    = useState(null);
+  const [authChecked, setAuthChecked] = useState(false); // indicates we've validated stored token
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  // ── Data ───────────────────────────────────────────────────────────
   const [patients,     setPatients]     = useState([]);
   const [doctors,      setDoctors]      = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -18,13 +16,39 @@ export function AppProvider({ children }) {
   const [loading,      setLoading]      = useState(false);
   const [toast,        setToast]        = useState(null);
 
-  // ── Toast helper ──────────────────────────────────────────────────────────
+  // ── Toast helper ───────────────────────────────────────────────────
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   }, []);
 
-  // ── Auth actions ──────────────────────────────────────────────────────────
+  // Validate stored token on app start
+  const verifyAuth = useCallback(async () => {
+    const token = localStorage.getItem("hms_token");
+    const userStr = localStorage.getItem("hms_user");
+    if (!token || !userStr) {
+      setAuth(null);
+      setAuthChecked(true);
+      return;
+    }
+
+    try {
+      // authAPI.getMe will use the token from localStorage via axios interceptor
+      const { data } = await authAPI.getMe();
+      setAuth(data.user);
+    } catch (err) {
+      // token invalid/expired — clear stored creds
+      localStorage.removeItem("hms_token");
+      localStorage.removeItem("hms_user");
+      setAuth(null);
+    } finally {
+      setAuthChecked(true);
+    }
+  }, []);
+
+  useEffect(() => { verifyAuth(); }, [verifyAuth]);
+
+  // ── Auth actions ───────────────────────────────────────────────────
   const login = async (username, password) => {
     const { data } = await authAPI.login({ username, password });
     localStorage.setItem("hms_token", data.token);
@@ -47,7 +71,7 @@ export function AppProvider({ children }) {
     setAuth(null);
   };
 
-  // ── Fetch helpers ─────────────────────────────────────────────────────────
+  // ── Fetch helpers ───────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     if (!auth) return;
     setLoading(true);
@@ -69,9 +93,12 @@ export function AppProvider({ children }) {
     }
   }, [auth, showToast]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  // Only fetch when auth is available (and after verification)
+  useEffect(() => {
+    if (auth) fetchAll();
+  }, [auth, fetchAll]);
 
-  // ── Patient CRUD ──────────────────────────────────────────────────────────
+  // ── Patient CRUD ───────────────────────────────────────────────────
   const addPatient = async (data) => {
     const res = await patientsAPI.create(data);
     setPatients(prev => [res.data.data, ...prev]);
@@ -90,7 +117,7 @@ export function AppProvider({ children }) {
     showToast("Patient removed.");
   };
 
-  // ── Doctor CRUD ───────────────────────────────────────────────────────────
+  // ── Doctor CRUD ───────────────────────────────────────────────────
   const addDoctor = async (data) => {
     const res = await doctorsAPI.create(data);
     setDoctors(prev => [res.data.data, ...prev]);
@@ -109,7 +136,7 @@ export function AppProvider({ children }) {
     showToast("Doctor removed.");
   };
 
-  // ── Appointment CRUD ──────────────────────────────────────────────────────
+  // ── Appointment CRUD ───────────────────────────────────────────────
   const addAppointment = async (data) => {
     const res = await appointmentsAPI.create(data);
     setAppointments(prev => [...prev, res.data.data]);
@@ -128,7 +155,7 @@ export function AppProvider({ children }) {
     showToast("Appointment removed.");
   };
 
-  // ── Bill CRUD ─────────────────────────────────────────────────────────────
+  // ── Bill CRUD ─────────────────────────────────────────────────────
   const addBill = async (data) => {
     const res = await billsAPI.create(data);
     setBills(prev => [res.data.data, ...prev]);
@@ -149,7 +176,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      auth, login, logout, register,
+      auth, authChecked, login, logout, register,
       patients, addPatient, updatePatient, deletePatient,
       doctors,  addDoctor,  updateDoctor,  deleteDoctor,
       appointments, addAppointment, updateAppointment, deleteAppointment,
